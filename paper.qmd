@@ -1,0 +1,129 @@
+---
+title: "Toronto Marriage Licenses"
+subtitle: "My subtitle if needed"
+author: 
+  Parth Samant
+thanks: "Code and data are available at: LINK."
+date: today
+date-format: long
+abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+format: pdf
+number-sections: true
+bibliography: references.bib
+---
+
+Citations: @opendatatoronto, @R
+
+
+```{r}
+#### Workspace setup ####
+library(tidyverse)
+
+#### Simulate data ####
+df <- 
+  tibble(
+    date = seq(as.Date('2023/01/01'), as.Date('2023/12/31'), by="day"),
+    num_marriages = rpois(365, lambda = 10)
+  )
+
+```
+
+
+
+```{r}
+
+# download data
+#### Workspace setup ####
+library(opendatatoronto)
+# [...UPDATE THIS...]
+
+# get package
+package <- show_package("e28bc818-43d5-43f7-b5d9-bdfb4eda5feb")
+package
+
+# get all resources for this package
+resources <- list_package_resources("e28bc818-43d5-43f7-b5d9-bdfb4eda5feb")
+
+# identify datastore resources; by default, Toronto Open Data sets datastore resource format to CSV for non-geospatial and GeoJSON for geospatial resources
+datastore_resources <- filter(resources, tolower(format) %in% c('csv', 'geojson'))
+
+# load the first datastore resource as a sample
+data <- filter(datastore_resources, row_number()==1) %>% get_resource()
+data
+
+
+
+#### Save data ####
+# [...UPDATE THIS...]
+# change the_raw_data to whatever name you assigned when you downloaded it.
+write_csv(data, "data/raw_data/Marriage License Statistics Data.csv") 
+
+```
+
+
+```{r}
+# tests
+data <- read_csv("data/raw_data/Marriage License Statistics Data.csv")
+
+# Tests for Negative numbers (LOOK ON CHAPTER 2)
+
+data$MARRIAGE_LICENSES |> min() >= 0
+
+# Tests for NAs
+
+all(is.na(data$MARRIAGE_LICENSES))
+```
+
+```{r}
+
+# cleaning 
+
+#### Clean data ####
+raw_data <- read_csv("data/raw_data/Marriage License Statistics Data.csv")
+
+cleaned_data <-
+  raw_data |>
+  janitor::clean_names() |> 
+  separate(col = time_period, 
+           into = c("year", "month"),
+           sep = "-") |>
+  mutate(date = lubridate::ymd(paste(year, month, "01", sep = "-")))
+
+#### Save data ####
+write_csv(cleaned_data, "data/raw_data/Marriage License Statistics Data.csv")
+
+```
+
+
+```{r}
+
+ggplot(data = cleaned_data , aes(x= month, y = marriage_licenses)) + geom_point()
+
+```
+# Paragraph 
+
+This graph shows the overall number of marriage licenses in certain Toronto boroughs by the month.
+There is a positive correlation between the summer months (i.e., June, July, August) and the number of marriage licenses. This correlation was shown using data from @opendatatoronto and mapped in @R. 
+
+
+
+
+
+# References
+
+@opendatatoronto{,
+    title = {opendatatoronto: Access the City of Toronto Open Data Portal},
+    author = {Sharla Gelfand},
+    year = {2022},
+    note = {R package version 0.1.5},
+    url = {https://CRAN.R-project.org/package=opendatatoronto},
+  }
+  
+@R{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
